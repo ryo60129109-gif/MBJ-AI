@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ゴールドプラン導入手順 ＆ HP作成支援</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans JP', sans-serif; background-color: #f1f5f9; }
+        .bg-navy { background-color: #1e3a8a; }
+        .text-gold { color: #eab308; }
+        .border-gold { border-color: #eab308; }
+        .bg-gold { background-color: #eab308; }
+        .loading-dots:after { content: ' .'; animation: dots 1.5s steps(5, end) infinite; }
+        @keyframes dots { 0%, 20% { content: ' .'; } 40% { content: ' ..'; } 60% { content: ' ...'; } 80% { content: ' ....'; } 100% { content: ' .....'; } }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header -->
+    <header class="bg-navy text-white py-16 px-6 shadow-2xl text-center">
+        <div class="max-w-4xl mx-auto">
+            <p class="text-gold font-black tracking-widest mb-2 text-xl">MEDICAL BOOK JAPAN</p>
+            <h1 class="text-5xl md:text-7xl font-black mb-6 leading-tight">ゴールドプラン<br>導入手順ガイド</h1>
+            <div class="h-2 w-32 bg-gold mx-auto mb-8"></div>
+            <p class="text-xl md:text-2xl text-blue-100 font-medium">最短で集客を開始するための導入フロー ＆ AI執筆アシスタント</p>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 -mt-10">
+        
+        <!-- AI Assistant Tool (HP Only) -->
+        <section class="bg-white rounded-[2rem] p-8 md:p-12 mb-12 shadow-2xl border-t-8 border-gold">
+            <div class="flex items-center mb-8">
+                <span class="text-4xl mr-4">✨</span>
+                <h2 class="text-3xl md:text-4xl font-black text-gray-800">HP作成・自己紹介文支援AI</h2>
+            </div>
+            <p class="text-xl text-gray-600 mb-10 leading-relaxed">
+                ホームページの「院の紹介」や「プロフィール」の文章作成をAIがお手伝いします。<br>
+                あなたの強みや想いを入力するだけで、誠実で信頼感のある文章を数秒で構成します。
+            </p>
+
+            <div class="max-w-3xl mx-auto">
+                <!-- Tool: HP Profile -->
+                <div class="bg-slate-50 rounded-3xl p-8 border border-slate-200">
+                    <div class="flex items-center mb-4">
+                        <i class="fa-solid fa-pen-nib text-amber-600 text-2xl mr-3"></i>
+                        <h3 class="text-2xl font-bold text-gray-800">HP紹介文作成</h3>
+                    </div>
+                    <p class="text-gray-500 mb-4 font-medium">導入ステップのフォーム入力に活用できます</p>
+                    <textarea id="hpInput" class="w-full p-5 rounded-2xl border-2 border-slate-200 focus:border-amber-600 focus:ring-0 text-lg mb-4" rows="4" placeholder="例：柔道整復師、歴10年、自分も腰痛で悩んだ経験がある、地域で一番話しやすい院を目指している"></textarea>
+                    <button onclick="generateContent('hp')" id="hpBtn" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-black py-4 rounded-xl text-lg transition-all shadow-lg active:transform active:scale-95">
+                        プロフィール文を生成 ✨
+                    </button>
+                    <div id="hpResult" class="mt-6 p-6 bg-white rounded-2xl border border-amber-50 hidden text-gray-800 text-lg whitespace-pre-wrap shadow-inner"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Steps -->
+        <div class="space-y-10 mb-20">
+            <h2 class="text-4xl font-black text-center text-gray-800 mb-12">導入スケジュール</h2>
+
+            <!-- STEP 01 (Original Step 3) -->
+            <div class="bg-white rounded-3xl p-10 shadow-xl border-l-[16px] border-green-600">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div class="flex-1">
+                        <span class="bg-green-600 text-white px-4 py-1 rounded-full font-bold text-sm mb-4 inline-block">STEP 01</span>
+                        <h3 class="text-3xl font-black text-gray-800 mb-4">事務局公式LINEの追加</h3>
+                        <p class="text-xl text-gray-600 mb-6">全ての制作・連絡の窓口です。登録後、<span class="text-red-600 font-black underline">必ずフルネームを送信</span>してください。</p>
+                    </div>
+                    <div class="w-full md:w-80">
+                        <a href="https://lin.ee/uHxvRRk" class="block bg-green-500 text-white text-center py-5 rounded-2xl font-black text-xl hover:bg-green-600 transition-all shadow-lg">公式LINE追加</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 02, 03 (Original Step 5, 6) -->
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white rounded-3xl p-8 shadow-lg border-b-8 border-gold text-center">
+                    <span class="bg-gold text-white px-4 py-1 rounded-full font-bold text-sm mb-2 inline-block">STEP 02</span>
+                    <h3 class="text-2xl font-bold mb-4">Googleマップ登録</h3>
+                    <a href="https://www.creal.co.jp/column/meo/" class="text-blue-600 font-bold text-xl underline">登録マニュアルはこちら</a>
+                </div>
+                <div class="bg-white rounded-3xl p-8 shadow-lg border-b-8 border-gold text-center">
+                    <span class="bg-gold text-white px-4 py-1 rounded-full font-bold text-sm mb-2 inline-block">STEP 03</span>
+                    <h3 class="text-2xl font-bold mb-4">自院LINEの運用方法</h3>
+                    <a href="https://www.linebiz.com/jp/column/technique/" class="text-blue-600 font-bold text-xl underline">公式マニュアルはこちら</a>
+                </div>
+            </div>
+
+            <!-- STEP 04 (Original Step 7) -->
+            <div class="bg-white rounded-3xl p-10 shadow-xl border-l-[16px] border-indigo-700">
+                <span class="bg-indigo-700 text-white px-4 py-1 rounded-full font-bold text-sm mb-4 inline-block">STEP 04</span>
+                <h3 class="text-3xl font-black text-gray-800 mb-4">HP作成フォーム入力</h3>
+                <p class="text-xl text-gray-600 mb-8">ホームページは情報の宝庫です。上のAIツールの生成結果を参考に、想いのこもった文章を入力しましょう。</p>
+                <a href="https://forms.gle/FpibsmJnu1YRHmqh8" class="block w-full bg-indigo-700 text-white text-center py-6 rounded-2xl font-black text-2xl hover:bg-indigo-800 transition-all shadow-lg">HP制作を依頼する</a>
+            </div>
+
+            <!-- STEP 05 (Original Step 8) -->
+            <div class="bg-gray-100 rounded-3xl p-10 text-center border-2 border-dashed border-gray-400">
+                <span class="bg-gray-400 text-white px-4 py-1 rounded-full font-bold text-sm mb-2 inline-block">STEP 05</span>
+                <h3 class="text-2xl font-black text-gray-500">納品・運用開始</h3>
+                <p class="text-gray-500">全てのフォーム提出が完了しましたら、納品をお待ちください。</p>
+            </div>
+        </div>
+
+        <!-- Footer Card -->
+        <footer class="bg-navy text-white rounded-[2rem] p-12 text-center shadow-2xl mb-20">
+            <h2 class="text-3xl font-black mb-6 text-gold">困ったときは？</h2>
+            <p class="text-xl text-blue-100 mb-10">
+                制作に関するご不明点は、事務局までメッセージをください。
+            </p>
+            <div class="flex justify-center">
+                <a href="https://lin.ee/uHxvRRk" class="bg-gold text-navy font-black px-12 py-5 rounded-full text-2xl hover:opacity-90 transition-all shadow-xl">LINEで相談</a>
+            </div>
+            <p class="mt-12 text-blue-300 font-bold">MEDICAL BOOK JAPAN 広告代行事務局</p>
+        </footer>
+    </main>
+
+    <!-- Custom Modal -->
+    <div id="modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
+            <h3 id="modalTitle" class="text-2xl font-black mb-4 text-gray-900"></h3>
+            <p id="modalMsg" class="text-lg text-gray-600 mb-8"></p>
+            <button onclick="closeModal()" class="w-full bg-navy text-white py-4 rounded-2xl font-black text-lg hover:opacity-90 transition-all">了解しました</button>
+        </div>
+    </div>
+
+    <script>
+        const apiKey = ""; // APIキーは自動で提供されます
+
+        function showModal(title, msg) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMsg').textContent = msg;
+            document.getElementById('modal').classList.remove('hidden');
+            document.getElementById('modal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('flex');
+            document.getElementById('modal').classList.add('hidden');
+        }
+
+        async function generateContent(type) {
+            const btn = document.getElementById(type + 'Btn');
+            const input = document.getElementById(type + 'Input').value;
+            const resultDiv = document.getElementById(type + 'Result');
+
+            if (!input.trim()) {
+                showModal("入力が必要です", "キーワードや強みをいくつか入力してください。");
+                return;
+            }
+
+            const originalBtnText = btn.innerHTML;
+            btn.innerHTML = 'AIが文章を構成中<span class="loading-dots"></span>';
+            btn.disabled = true;
+
+            const systemPrompt = "あなたは信頼感のある治療家専門のライターです。ユーザーが入力したキーワードや想いを元に、ホームページのプロフィール欄や挨拶文としてそのまま掲載できる、誠実で心に響く文章を作成してください（300文字〜500文字程度）。";
+
+            try {
+                const text = await callGemini(input, systemPrompt);
+                resultDiv.textContent = text;
+                resultDiv.classList.remove('hidden');
+                resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } catch (error) {
+                showModal("リクエスト失敗", "現在アクセスが集中しています。しばらく待ってから再度お試しください。");
+            } finally {
+                btn.innerHTML = originalBtnText;
+                btn.disabled = false;
+            }
+        }
+
+        async function callGemini(userQuery, systemPrompt, retries = 5) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] }
+            };
+
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error('API request failed');
+                    const result = await response.json();
+                    return result.candidates?.[0]?.content?.parts?.[0]?.text || "申し訳ありません、生成できませんでした。";
+                } catch (error) {
+                    if (i === retries - 1) throw error;
+                    await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
+                }
+            }
+        }
+    </script>
+</body>
+</html>
