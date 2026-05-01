@@ -1,0 +1,486 @@
+import { useState, useCallback } from "react";
+
+const CLINIC_INFO = {
+  name: "福佳 -fukka-",
+  area: "名古屋",
+  genre: "整体院",
+  hashtags: [
+    "#福佳", "#fukka", "#整体", "#名古屋整体", "#腰痛改善",
+    "#姿勢改善", "#骨盤矯正", "#慢性腰痛", "#肩こり改善",
+    "#名古屋", "#整体院", "#身体のメンテナンス"
+  ],
+};
+
+const CATEGORIES = [
+  { id: "symptom", label: "症状・お悩み系", icon: "💡", desc: "腰痛・肩こりなどの啓発" },
+  { id: "case", label: "改善事例・ビフォーアフター", icon: "✨", desc: "施術成果の紹介" },
+  { id: "knowledge", label: "セルフケア・豆知識", icon: "📖", desc: "ストレッチや予防法" },
+  { id: "clinic", label: "院の紹介・日常", icon: "🏠", desc: "雰囲気や想いを伝える" },
+];
+
+const TONES = [
+  { id: "friendly", label: "親しみやすい" },
+  { id: "professional", label: "専門的・信頼感" },
+  { id: "empathy", label: "共感・寄り添い" },
+];
+
+export default function FukkaMeoInstaConverter() {
+  const [step, setStep] = useState(1);
+  const [mode, setMode] = useState(null); // "create" or "convert"
+  const [category, setCategory] = useState(null);
+  const [tone, setTone] = useState("friendly");
+  const [meoInput, setMeoInput] = useState("");
+  const [topic, setTopic] = useState("");
+  const [meoResult, setMeoResult] = useState("");
+  const [instaCaption, setInstaCaption] = useState("");
+  const [catchCopy, setCatchCopy] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [copied, setCopied] = useState({});
+
+  const callClaude = useCallback(async (prompt, systemPrompt) => {
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: systemPrompt,
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+      const data = await res.json();
+      return data.content?.map(b => b.text || "").join("\n") || "";
+    } catch (e) {
+      throw new Error("API通信エラーが発生しました。再度お試しください。");
+    }
+  }, []);
+
+  const generateMEO = async () => {
+    if (!topic.trim()) { setError("投稿テーマを入力してください"); return; }
+    setLoading(true); setError("");
+    try {
+      const sys = `あなたは整体院「${CLINIC_INFO.name}」（${CLINIC_INFO.area}）のMEO（Googleビジネスプロフィール）投稿を作成するライターです。
+ルール：
+- 200〜400文字で書く
+- カテゴリ「${CATEGORIES.find(c=>c.id===category)?.label}」に合った内容
+- トーン：${TONES.find(t=>t.id===tone)?.label}
+- 地域名（${CLINIC_INFO.area}）を自然に含める
+- 最後にさりげなく来院を促す一文を入れる
+- 投稿文のみ出力（見出しや説明は不要）`;
+      const result = await callClaude(`テーマ：${topic}`, sys);
+      setMeoResult(result);
+      setStep(3);
+    } catch (e) { setError(e.message); }
+    setLoading(false);
+  };
+
+  const convertToInsta = async () => {
+    const source = mode === "create" ? meoResult : meoInput;
+    if (!source.trim()) { setError("変換する文章がありません"); return; }
+    setLoading(true); setError("");
+    try {
+      const sys = `あなたは整体院「${CLINIC_INFO.name}」のInstagramキャプションライターです。
+
+以下のMEO投稿文をInstagram向けに変換してください。
+
+ルール：
+- 150〜250文字のカジュアルなキャプションにする
+- 最初の1行で興味を引く（問いかけor共感）
+- 「です・ます」は使うが、堅すぎない語りかけ口調
+- 絵文字は1〜3個まで（使いすぎない）
+- 最後にCTA（「プロフィールのリンクから」等）
+- 末尾にハッシュタグを10個程度（改行2つ空けて）
+- 推奨ハッシュタグ：${CLINIC_INFO.hashtags.join(" ")}
+- キャプションのみ出力`;
+      const caption = await callClaude(source, sys);
+
+      const sys2 = `あなたは整体院「${CLINIC_INFO.name}」のInstagram画像用キャッチコピーライターです。
+
+以下の投稿内容から、Instagram投稿の1枚目画像に載せる短いキャッチコピーを3案作ってください。
+
+ルール：
+- 1案あたり15文字以内
+- スマホで一目で読めるインパクト重視
+- 問いかけ型・断言型・数字型など、バリエーションをつける
+- 番号付きで3案だけ出力（説明不要）`;
+      const catches = await callClaude(source, sys2);
+
+      setInstaCaption(caption);
+      setCatchCopy(catches);
+      setStep(4);
+    } catch (e) { setError(e.message); }
+    setLoading(false);
+  };
+
+  const copyToClipboard = (text, key) => {
+    navigator.clipboard.writeText(text);
+    setCopied(p => ({ ...p, [key]: true }));
+    setTimeout(() => setCopied(p => ({ ...p, [key]: false })), 2000);
+  };
+
+  const reset = () => {
+    setStep(1); setMode(null); setCategory(null); setTone("friendly");
+    setMeoInput(""); setTopic(""); setMeoResult("");
+    setInstaCaption(""); setCatchCopy(""); setError("");
+  };
+
+  return (
+    <div style={{
+      minHeight: "100vh",
+      background: "linear-gradient(145deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%)",
+      color: "#e8e6e1",
+      fontFamily: "'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif",
+      padding: "20px",
+    }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        textarea:focus, input:focus { outline: none; }
+      `}</style>
+
+      {/* Header */}
+      <div style={{
+        textAlign: "center",
+        marginBottom: 32,
+        paddingBottom: 24,
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+      }}>
+        <div style={{
+          fontSize: 11, letterSpacing: 4, color: "#6b6b7b",
+          textTransform: "uppercase", marginBottom: 8,
+        }}>MEO → Instagram Converter</div>
+        <h1 style={{
+          fontSize: 22,
+          fontFamily: "'Zen Kaku Gothic New', sans-serif",
+          fontWeight: 700,
+          background: "linear-gradient(90deg, #c9a96e, #f0d89d, #c9a96e)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          marginBottom: 6,
+        }}>{CLINIC_INFO.name}</h1>
+        <div style={{ fontSize: 12, color: "#6b6b7b" }}>
+          {CLINIC_INFO.area}｜{CLINIC_INFO.genre}
+        </div>
+      </div>
+
+      {/* Progress */}
+      <div style={{
+        display: "flex", justifyContent: "center", gap: 8,
+        marginBottom: 32,
+      }}>
+        {[1,2,3,4].map(s => (
+          <div key={s} style={{
+            width: s <= step ? 32 : 24,
+            height: 4,
+            borderRadius: 2,
+            background: s <= step
+              ? "linear-gradient(90deg, #c9a96e, #f0d89d)"
+              : "rgba(255,255,255,0.08)",
+            transition: "all 0.3s",
+          }} />
+        ))}
+      </div>
+
+      {/* Step 1: Mode Selection */}
+      {step === 1 && (
+        <div style={{ maxWidth: 480, margin: "0 auto" }}>
+          <h2 style={{ fontSize: 16, fontWeight: 500, marginBottom: 20, textAlign: "center" }}>
+            どちらの方法で始めますか？
+          </h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <button onClick={() => { setMode("create"); setStep(2); }}
+              style={{
+                padding: "20px 24px", background: "rgba(201,169,110,0.08)",
+                border: "1px solid rgba(201,169,110,0.2)", borderRadius: 12,
+                color: "#e8e6e1", cursor: "pointer", textAlign: "left",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={e => { e.target.style.background = "rgba(201,169,110,0.15)"; e.target.style.borderColor = "rgba(201,169,110,0.4)"; }}
+              onMouseLeave={e => { e.target.style.background = "rgba(201,169,110,0.08)"; e.target.style.borderColor = "rgba(201,169,110,0.2)"; }}
+            >
+              <div style={{ fontSize: 15, fontWeight: 500, marginBottom: 6 }}>📝 MEO投稿をゼロから作成</div>
+              <div style={{ fontSize: 12, color: "#8b8b9b" }}>テーマを入力 → MEO投稿を生成 → インスタに変換</div>
+            </button>
+
+            <button onClick={() => { setMode("convert"); setStep(3); }}
+              style={{
+                padding: "20px 24px", background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12,
+                color: "#e8e6e1", cursor: "pointer", textAlign: "left",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={e => { e.target.style.background = "rgba(255,255,255,0.06)"; e.target.style.borderColor = "rgba(255,255,255,0.15)"; }}
+              onMouseLeave={e => { e.target.style.background = "rgba(255,255,255,0.03)"; e.target.style.borderColor = "rgba(255,255,255,0.08)"; }}
+            >
+              <div style={{ fontSize: 15, fontWeight: 500, marginBottom: 6 }}>🔄 既存のMEO投稿を変換</div>
+              <div style={{ fontSize: 12, color: "#8b8b9b" }}>投稿済みのMEO文章を貼り付け → インスタに変換</div>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 2: Create MEO (only for "create" mode) */}
+      {step === 2 && mode === "create" && (
+        <div style={{ maxWidth: 480, margin: "0 auto" }}>
+          <h2 style={{ fontSize: 16, fontWeight: 500, marginBottom: 20 }}>投稿の設定</h2>
+
+          {/* Category */}
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ fontSize: 12, color: "#8b8b9b", marginBottom: 8, display: "block" }}>カテゴリ</label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              {CATEGORIES.map(c => (
+                <button key={c.id} onClick={() => setCategory(c.id)}
+                  style={{
+                    padding: "12px",
+                    background: category === c.id ? "rgba(201,169,110,0.15)" : "rgba(255,255,255,0.03)",
+                    border: `1px solid ${category === c.id ? "rgba(201,169,110,0.4)" : "rgba(255,255,255,0.08)"}`,
+                    borderRadius: 8, color: "#e8e6e1", cursor: "pointer",
+                    textAlign: "left", transition: "all 0.2s",
+                  }}>
+                  <div style={{ fontSize: 14, marginBottom: 2 }}>{c.icon} {c.label}</div>
+                  <div style={{ fontSize: 10, color: "#6b6b7b" }}>{c.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tone */}
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ fontSize: 12, color: "#8b8b9b", marginBottom: 8, display: "block" }}>トーン</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              {TONES.map(t => (
+                <button key={t.id} onClick={() => setTone(t.id)}
+                  style={{
+                    flex: 1, padding: "10px",
+                    background: tone === t.id ? "rgba(201,169,110,0.15)" : "rgba(255,255,255,0.03)",
+                    border: `1px solid ${tone === t.id ? "rgba(201,169,110,0.4)" : "rgba(255,255,255,0.08)"}`,
+                    borderRadius: 8, color: "#e8e6e1", cursor: "pointer",
+                    fontSize: 13, transition: "all 0.2s",
+                  }}>{t.label}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Topic */}
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ fontSize: 12, color: "#8b8b9b", marginBottom: 8, display: "block" }}>投稿テーマ</label>
+            <input
+              value={topic} onChange={e => setTopic(e.target.value)}
+              placeholder="例：慢性腰痛と筋肉バランスの関係"
+              style={{
+                width: "100%", padding: "14px 16px",
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 8, color: "#e8e6e1", fontSize: 14,
+              }}
+            />
+          </div>
+
+          {error && <div style={{ color: "#e87c6b", fontSize: 13, marginBottom: 12 }}>{error}</div>}
+
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => setStep(1)}
+              style={{
+                padding: "14px 20px", background: "transparent",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 8, color: "#8b8b9b", cursor: "pointer", fontSize: 14,
+              }}>戻る</button>
+            <button onClick={generateMEO} disabled={loading || !category}
+              style={{
+                flex: 1, padding: "14px",
+                background: loading ? "rgba(201,169,110,0.2)" : "linear-gradient(135deg, #c9a96e, #a88a4e)",
+                border: "none", borderRadius: 8, color: "#0a0a0a",
+                cursor: loading ? "wait" : "pointer", fontSize: 14, fontWeight: 600,
+                opacity: !category ? 0.4 : 1,
+              }}>
+              {loading ? "生成中..." : "MEO投稿を生成"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 3: Review MEO + Convert */}
+      {step === 3 && (
+        <div style={{ maxWidth: 520, margin: "0 auto" }}>
+          <h2 style={{ fontSize: 16, fontWeight: 500, marginBottom: 20 }}>
+            {mode === "create" ? "MEO投稿を確認 → インスタに変換" : "MEO投稿を貼り付け → インスタに変換"}
+          </h2>
+
+          {mode === "create" ? (
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <label style={{ fontSize: 12, color: "#8b8b9b" }}>生成されたMEO投稿</label>
+                <button onClick={() => copyToClipboard(meoResult, "meo")}
+                  style={{
+                    padding: "4px 12px", background: "rgba(201,169,110,0.1)",
+                    border: "1px solid rgba(201,169,110,0.2)", borderRadius: 6,
+                    color: "#c9a96e", cursor: "pointer", fontSize: 11,
+                  }}>
+                  {copied.meo ? "✓ コピー済" : "コピー"}
+                </button>
+              </div>
+              <textarea value={meoResult} onChange={e => setMeoResult(e.target.value)}
+                rows={8}
+                style={{
+                  width: "100%", padding: "14px 16px",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 8, color: "#e8e6e1", fontSize: 14,
+                  lineHeight: 1.7, resize: "vertical",
+                }} />
+              <div style={{ fontSize: 11, color: "#6b6b7b", marginTop: 4 }}>
+                ※ 編集可能です。修正してからインスタ変換できます
+              </div>
+            </div>
+          ) : (
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: 12, color: "#8b8b9b", marginBottom: 8, display: "block" }}>
+                MEO投稿文を貼り付け
+              </label>
+              <textarea value={meoInput} onChange={e => setMeoInput(e.target.value)}
+                rows={8}
+                placeholder="Googleビジネスプロフィールに投稿した（する）文章をここに貼り付けてください"
+                style={{
+                  width: "100%", padding: "14px 16px",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 8, color: "#e8e6e1", fontSize: 14,
+                  lineHeight: 1.7, resize: "vertical",
+                }} />
+            </div>
+          )}
+
+          {error && <div style={{ color: "#e87c6b", fontSize: 13, marginBottom: 12 }}>{error}</div>}
+
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => setStep(mode === "create" ? 2 : 1)}
+              style={{
+                padding: "14px 20px", background: "transparent",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 8, color: "#8b8b9b", cursor: "pointer", fontSize: 14,
+              }}>戻る</button>
+            <button onClick={convertToInsta} disabled={loading}
+              style={{
+                flex: 1, padding: "14px",
+                background: loading ? "rgba(201,169,110,0.2)" : "linear-gradient(135deg, #c9a96e, #a88a4e)",
+                border: "none", borderRadius: 8, color: "#0a0a0a",
+                cursor: loading ? "wait" : "pointer", fontSize: 14, fontWeight: 600,
+              }}>
+              {loading ? "変換中..." : "インスタ用に変換"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 4: Results */}
+      {step === 4 && (
+        <div style={{ maxWidth: 520, margin: "0 auto" }}>
+          <h2 style={{ fontSize: 16, fontWeight: 500, marginBottom: 24 }}>投稿素材が完成しました</h2>
+
+          {/* Instagram Caption */}
+          <div style={{
+            marginBottom: 20, padding: 20,
+            background: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 12,
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 500, color: "#c9a96e" }}>📱 Instagramキャプション</div>
+              <button onClick={() => copyToClipboard(instaCaption, "insta")}
+                style={{
+                  padding: "6px 14px",
+                  background: copied.insta ? "rgba(110,190,130,0.2)" : "rgba(201,169,110,0.15)",
+                  border: `1px solid ${copied.insta ? "rgba(110,190,130,0.4)" : "rgba(201,169,110,0.3)"}`,
+                  borderRadius: 6, color: copied.insta ? "#6ebe82" : "#c9a96e",
+                  cursor: "pointer", fontSize: 12, fontWeight: 500,
+                }}>
+                {copied.insta ? "✓ コピー済" : "コピーする"}
+              </button>
+            </div>
+            <div style={{
+              fontSize: 14, lineHeight: 1.8, color: "#d0cec8",
+              whiteSpace: "pre-wrap", wordBreak: "break-word",
+            }}>{instaCaption}</div>
+          </div>
+
+          {/* Catch Copy */}
+          <div style={{
+            marginBottom: 20, padding: 20,
+            background: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 12,
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 500, color: "#c9a96e" }}>🎨 画像用キャッチコピー</div>
+              <button onClick={() => copyToClipboard(catchCopy, "catch")}
+                style={{
+                  padding: "6px 14px",
+                  background: copied.catch ? "rgba(110,190,130,0.2)" : "rgba(201,169,110,0.15)",
+                  border: `1px solid ${copied.catch ? "rgba(110,190,130,0.4)" : "rgba(201,169,110,0.3)"}`,
+                  borderRadius: 6, color: copied.catch ? "#6ebe82" : "#c9a96e",
+                  cursor: "pointer", fontSize: 12, fontWeight: 500,
+                }}>
+                {copied.catch ? "✓ コピー済" : "コピーする"}
+              </button>
+            </div>
+            <div style={{
+              fontSize: 14, lineHeight: 1.8, color: "#d0cec8",
+              whiteSpace: "pre-wrap",
+            }}>{catchCopy}</div>
+          </div>
+
+          {/* MEO Original (collapsible reference) */}
+          {mode === "create" && (
+            <div style={{
+              marginBottom: 20, padding: 20,
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.05)",
+              borderRadius: 12,
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: "#8b8b9b" }}>📋 MEO投稿（参考）</div>
+                <button onClick={() => copyToClipboard(meoResult, "meo2")}
+                  style={{
+                    padding: "6px 14px",
+                    background: copied.meo2 ? "rgba(110,190,130,0.2)" : "rgba(255,255,255,0.05)",
+                    border: `1px solid ${copied.meo2 ? "rgba(110,190,130,0.4)" : "rgba(255,255,255,0.1)"}`,
+                    borderRadius: 6, color: copied.meo2 ? "#6ebe82" : "#8b8b9b",
+                    cursor: "pointer", fontSize: 12,
+                  }}>
+                  {copied.meo2 ? "✓ コピー済" : "コピーする"}
+                </button>
+              </div>
+              <div style={{
+                fontSize: 13, lineHeight: 1.7, color: "#6b6b7b",
+                whiteSpace: "pre-wrap",
+              }}>{meoResult}</div>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={reset}
+              style={{
+                flex: 1, padding: "14px",
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 8, color: "#e8e6e1",
+                cursor: "pointer", fontSize: 14,
+              }}>新しい投稿を作成</button>
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <div style={{
+        textAlign: "center", marginTop: 48, paddingTop: 20,
+        borderTop: "1px solid rgba(255,255,255,0.04)",
+        fontSize: 10, color: "#3b3b4b",
+      }}>
+        {CLINIC_INFO.name}｜MEO → Instagram 投稿ツール
+      </div>
+    </div>
+  );
+}
